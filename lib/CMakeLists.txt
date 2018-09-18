@@ -13,24 +13,12 @@ cmake_minimum_required (VERSION 2.6)
 
 include_directories ("./include")
 
-add_definitions(-DDEBUG)
-add_definitions(-DACL_MTU_FRAG)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ggdb")
 set(LIBRARY_OUTPUT_PATH ../link)
 
-add_library(bungetLib STATIC ascon.cpp
-    bt_incinpl.cpp
-    bt_socket.cpp
-    bu_gap.cpp
-    bu_gatt.cpp
-    bu_hci.cpp
-    bybuff.cpp
-    gattdefs.cpp
-    hci_socket.cpp
-    l2cap_socket.cpp
-    libbungetpriv.cpp
-    rfcomm_socket.cpp
-    sco_socket.cpp
-    secmanp.cpp
-    uguid.cpp)
+file(GLOB SRC_FILES *.cpp *.h)
+add_library(bunget SHARED ${SRC_FILES})
+add_library(bunget_static STATIC ${SRC_FILES})
+set_target_properties(bunget_static PROPERTIES OUTPUT_NAME bunget)
