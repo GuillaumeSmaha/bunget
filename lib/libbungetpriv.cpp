@@ -299,20 +299,39 @@ IService* SrvDevice::get_service(uint16_t srvid)
 void SrvDevice::add_default_service()
 {
     char hname[128] = {0};
-    uint8_t apear[]={0x80,0x00};
-    uint8_t apear1[]={0x00,0x00,0x00,0x00};
 
     if(_name.empty())
         ::gethostname(hname, sizeof(hname)-sizeof(char));
     else
         ::strcpy(hname, (_name.c_str()));
+
+    // Service Generic Access
     IService* ps = add_service(0x1800, hname);
     ((GattSrv*)ps)->_default=true;
-    ps->add_charact(0x2a00, PROPERTY_READ,0,0,::strlen(hname),(uint8_t*)hname);
-    ps->add_charact(0x2a01, PROPERTY_READ,0,0,sizeof(apear),apear);
+    // Device name
+    printf("name: %s\n", hname);
+    ps->add_charact(0x2a00, PROPERTY_READ,0,FORMAT_RAW,::strlen(hname),(uint8_t*)hname);
+    // Appareance
+    uint8_t apear[]={0xc0,0x01};
+    ps->add_charact(0x2a01, PROPERTY_READ,0,FORMAT_RAW,sizeof(apear),apear);
+    // Peripheral Preferred Connection Parameters
+    //uint8_t periphicalConParameters[]={0xFF,0xFF, 0xFF,0xFF, 0x00,0x00, 0xFF,0xFF}; // Unset
+    //uint8_t periphicalConParameters[]={0x00,0x0C, 0x00,0x18, 0x00,0x00, 0x00,0xC8}; // High
+    uint8_t periphicalConParameters[]={0x00,0x18, 0x00,0x30, 0x00,0x00, 0x02,0x58}; // Balanced
+    //uint8_t periphicalConParameters[]={0x00,0x54, 0x00,0x6C, 0x00,0x02, 0x02,0x58}; // Low power
+    ps->add_charact(0x2a04, PROPERTY_READ,0,FORMAT_RAW,sizeof(periphicalConParameters),periphicalConParameters);
+
+    // Service Generic Attribute
     ps = add_service(0x1801, hname);
     ((GattSrv*)ps)->_default=true;
-    ps->add_charact(0x2a05, PROPERTY_INDICATE,0,0,sizeof(apear1),apear1);
+    uint8_t apear1[]={0x00,0x00,0x00,0x00};
+    ps->add_charact(0x2a05, PROPERTY_INDICATE,0,FORMAT_RAW,sizeof(apear1),apear1);
+
+    // Service Tx Power
+    ps = add_service(0x1804, hname);
+    ((GattSrv*)ps)->_default=true;
+    uint8_t tx_power[]={0x04};
+    ps->add_charact(0x2a07, PROPERTY_READ,0,FORMAT_RAW,sizeof(tx_power),tx_power);
 }
 
 /****************************************************************************************

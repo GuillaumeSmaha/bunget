@@ -83,6 +83,8 @@ void bu_gap::advertise(const std::string& name,
         for(const auto  &s : srvs)
         {
             GattSrv* ps = dynamic_cast<GattSrv*>(s);
+        //    if(ps->_default)
+         //       continue;
            if(ps->_default)
                continue;
             ps->debug();
