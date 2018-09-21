@@ -97,17 +97,21 @@ int main(int argc, char **argv)
 // #endif // 0
 
         IService*   ps = BS->add_service(0x123F, args::get(serviceName).c_str());
+
         procedure.LedChr = ps->add_charact(UID_GPIO,PROPERTY_WRITE|PROPERTY_INDICATE,
                                  0,
                                  FORMAT_RAW, 1); // 1 / 0
 
-        procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ|PROPERTY_NOTIFY,
+        //procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ|PROPERTY_NOTIFY,
+        procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ,
                                  0,
                                  FORMAT_RAW, 20); // we send it as string
 
-        procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_NOTIFY|PROPERTY_INDICATE,
+        //procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_NOTIFY|PROPERTY_INDICATE,
+        procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_READ,
                                   0,
                                   FORMAT_FLOAT, FORMAT_FLOAT_LEN); // we send it as float
+
         BS->advertise(args::get(timeAdvetising));
         BS->run();
         BS->stop();
