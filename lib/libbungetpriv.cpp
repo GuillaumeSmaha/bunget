@@ -44,7 +44,7 @@ inline size_t tick_count()
 
 /****************************************************************************************
 */
-SrvDevice::SrvDevice(ISrvProc* proc, int& hcid, const char* name, int delay, bool advall, bool defaults):_cb_proc(proc),
+SrvDevice::SrvDevice(ISrvProc* proc, int& hcid, BtConfig* config, int delay, bool advall, bool defaults):_cb_proc(proc),
                     _def(false),_hcidev(hcid),_advinterval(MIN_ADV_INTERVAL),_advall(advall),_notyinterval(MIN_NOTY_INTERVAL)
 {
     _gapp = 0;
@@ -52,7 +52,7 @@ SrvDevice::SrvDevice(ISrvProc* proc, int& hcid, const char* name, int delay, boo
     _pacl = 0;
     _curnoty = 0;
     _running = false;
-    _name = name;
+    _config = config;
     _hcistatus = STATE_POWEREDOFF;
     _advstatus = 0;
     _scanrespdatastatus = 0;
@@ -119,7 +119,7 @@ void SrvDevice::run()
 void SrvDevice::on_configure_device(int devid)
 {
     _status = eINITALISING;
-    _cb_proc->initHciDevice(devid, _name.c_str());
+    _cb_proc->initHciDevice(devid, _config->_name.c_str());
 }
 
 /****************************************************************************************
@@ -130,7 +130,7 @@ void SrvDevice::on_dev_status(bool onoff)
     {
         if(_running)
         {
-            _gapp->advertise(_name.c_str(),_services, _pin);
+            _gapp->advertise(_config,_services, _pin);
         }
     }
     _cb_proc->onDeviceStatus(onoff);//onDeviceStatus
@@ -165,7 +165,7 @@ int     SrvDevice::advertise(int millis)
                 _gapp =  new bu_gap(_hci);
                 _gatt = new bu_gatt(_hci);
                 _gatt->setMaxMtu(_maxMtu);
-                _gapp->advertise(_name.c_str(), _services, _pin);
+                _gapp->advertise(_config, _services, _pin);
 
             }
         }
@@ -299,39 +299,29 @@ IService* SrvDevice::get_service(uint16_t srvid)
 void SrvDevice::add_default_service()
 {
     char hname[128] = {0};
-
-    if(_name.empty())
-        ::gethostname(hname, sizeof(hname)-sizeof(char));
-    else
-        ::strcpy(hname, (_name.c_str()));
+    ::strcpy(hname, (_config->_name.c_str()));
 
     // Service Generic Access
     IService* ps = add_service(0x1800, hname);
     ((GattSrv*)ps)->_default=true;
     // Device name
-    printf("name: %s\n", hname);
-    ps->add_charact(0x2a00, PROPERTY_READ,0,FORMAT_RAW,::strlen(hname),(uint8_t*)hname);
+    ps->add_charact(GATT_CHARAC_DEVICE_NAME, PROPERTY_READ,0,FORMAT_RAW,::strlen(hname),(uint8_t*)hname);
     // Appareance
-    uint8_t apear[]={0xc0,0x01};
-    ps->add_charact(0x2a01, PROPERTY_READ,0,FORMAT_RAW,sizeof(apear),apear);
+    ps->add_charact(GATT_CHARAC_APPEARANCE, PROPERTY_READ,0,FORMAT_RAW,2,_config->_appearance);
     // Peripheral Preferred Connection Parameters
-    //uint8_t periphicalConParameters[]={0xFF,0xFF, 0xFF,0xFF, 0x00,0x00, 0xFF,0xFF}; // Unset
-    //uint8_t periphicalConParameters[]={0x00,0x0C, 0x00,0x18, 0x00,0x00, 0x00,0xC8}; // High
-    uint8_t periphicalConParameters[]={0x00,0x18, 0x00,0x30, 0x00,0x00, 0x02,0x58}; // Balanced
-    //uint8_t periphicalConParameters[]={0x00,0x54, 0x00,0x6C, 0x00,0x02, 0x02,0x58}; // Low power
-    ps->add_charact(0x2a04, PROPERTY_READ,0,FORMAT_RAW,sizeof(periphicalConParameters),periphicalConParameters);
+    ps->add_charact(GATT_CHARAC_PERIPHERAL_PREF_CONN, PROPERTY_READ,0,FORMAT_RAW,8,_config->_periphical_pref_conn);
 
     // Service Generic Attribute
     ps = add_service(0x1801, hname);
     ((GattSrv*)ps)->_default=true;
     uint8_t apear1[]={0x00,0x00,0x00,0x00};
-    ps->add_charact(0x2a05, PROPERTY_INDICATE,0,FORMAT_RAW,sizeof(apear1),apear1);
+    ps->add_charact(GATT_CHARAC_SERVICE_CHANGED, PROPERTY_INDICATE,0,FORMAT_RAW,sizeof(apear1),apear1);
 
     // Service Tx Power
     ps = add_service(0x1804, hname);
     ((GattSrv*)ps)->_default=true;
-    uint8_t tx_power[]={0x04};
-    ps->add_charact(0x2a07, PROPERTY_READ,0,FORMAT_RAW,sizeof(tx_power),tx_power);
+    uint8_t tx_power[]={_config->_tx_power};
+    ps->add_charact(GATT_CHARAC_TX_POWER, PROPERTY_READ,0,FORMAT_RAW,sizeof(tx_power),tx_power);
 }
 
 /****************************************************************************************
@@ -680,14 +670,14 @@ BtCtx* BtCtx::instance()
 */
 IServer* ContextImpl::new_server(ISrvProc* proc, 
                                 int hcidev, 
-                                const char* name, 
+                                BtConfig* config, 
                                 int tweak_delay,
                                 bool advall,
                                 bool defaults)
 {
     if(_adapters.find(hcidev) == _adapters.end())
     {
-        SrvDevice* p = new SrvDevice(proc, hcidev, name, tweak_delay, advall, defaults);
+        SrvDevice* p = new SrvDevice(proc, hcidev, config, tweak_delay, advall, defaults);
         if(hcidev<0){
             delete p;
             return 0;

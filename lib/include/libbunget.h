@@ -140,6 +140,137 @@ public:
     int         _ex;
 };
 
+
+
+
+class BtConfig
+{
+public:
+    enum S_PERIPHERAL_PREF_CONN{
+        UNSET,
+        HIGH,
+        BALANCED,
+        LOW_POWER,
+    };
+
+    std::string _name;
+    std::string _name_short;
+    uint8_t     _tx_power;
+    uint8_t*    _appearance;
+    uint8_t*    _periphical_pref_conn;
+    uint8_t*    _class_of_device;
+
+public:
+    BtConfig()
+    {
+        _appearance = new uint8_t[2];
+        _periphical_pref_conn = new uint8_t[8];
+        _class_of_device = new uint8_t[3];
+        set_periphical_pref_conn(UNSET);
+    }
+    
+    ~BtConfig()
+    {
+        delete _appearance;
+        delete _periphical_pref_conn;
+        delete _class_of_device;
+    }
+
+    void set_apparence(uint16_t appareance)
+    {
+        // appareance = bswap_16(appareance);
+        _appearance[0] = appareance & 0xFF;
+        _appearance[1] = appareance >> 8;
+    }
+
+    void set_apparence(uint8_t * appareance)
+    {
+        _appearance[0] = appareance[0];
+        _appearance[1] = appareance[1];
+    }
+
+    void set_apparence(uint16_t appareanceCat, uint8_t appareanceSubCat)
+    {
+        // See https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.gap.appearance.xml&u=org.bluetooth.characteristic.gap.appearance.xml
+        _appearance[0] = (((appareanceCat << 6) + appareanceSubCat) & 0xFF);
+        _appearance[1] = (((appareanceCat << 6) + appareanceSubCat) >> 8);
+    }
+
+    void set_periphical_pref_conn(S_PERIPHERAL_PREF_CONN pref_conn)
+    {
+        switch(pref_conn)
+        {
+            case UNSET:
+                _periphical_pref_conn[0] = 0xFF;
+                _periphical_pref_conn[1] = 0xFF;
+
+                _periphical_pref_conn[2] = 0xFF;
+                _periphical_pref_conn[3] = 0xFF;
+
+                _periphical_pref_conn[4] = 0x00;
+                _periphical_pref_conn[5] = 0x00;
+
+                _periphical_pref_conn[6] = 0xFF;
+                _periphical_pref_conn[7] = 0xFF;
+                break;
+            case HIGH:
+                _periphical_pref_conn[0] = 0x00;
+                _periphical_pref_conn[1] = 0x0C;
+
+                _periphical_pref_conn[2] = 0x00;
+                _periphical_pref_conn[3] = 0x18;
+
+                _periphical_pref_conn[4] = 0x00;
+                _periphical_pref_conn[5] = 0x00;
+
+                _periphical_pref_conn[6] = 0x00;
+                _periphical_pref_conn[7] = 0xC8;
+                break;
+            case BALANCED:
+                _periphical_pref_conn[0] = 0x00;
+                _periphical_pref_conn[1] = 0x18;
+
+                _periphical_pref_conn[2] = 0x00;
+                _periphical_pref_conn[3] = 0x30;
+
+                _periphical_pref_conn[4] = 0x00;
+                _periphical_pref_conn[5] = 0x00;
+
+                _periphical_pref_conn[6] = 0x02;
+                _periphical_pref_conn[7] = 0x58;
+                break;
+            case LOW_POWER:
+                _periphical_pref_conn[0] = 0x00;
+                _periphical_pref_conn[1] = 0x54;
+
+                _periphical_pref_conn[2] = 0x00;
+                _periphical_pref_conn[3] = 0x6C;
+
+                _periphical_pref_conn[4] = 0x00;
+                _periphical_pref_conn[5] = 0x02;
+
+                _periphical_pref_conn[6] = 0x02;
+                _periphical_pref_conn[7] = 0x58;
+                break;
+        }
+    }
+
+    void set_class_of_device(uint8_t * class_of_device)
+    {
+        _class_of_device[0] = class_of_device[0];
+        _class_of_device[1] = class_of_device[1];
+        _class_of_device[2] = class_of_device[2];
+    }
+
+    void set_class_of_device(uint16_t service_class, uint8_t major_class, uint8_t minor_class)
+    {
+        uint32_t cod = (service_class << 8) | (major_class << COD_MAJOR_BIT_OFFSET) | (minor_class << COD_MINOR_BIT_OFFSET);
+        _class_of_device[0] = cod >> 16;
+        _class_of_device[1] = (cod >> 8) & 0xFF;
+        _class_of_device[2] = cod & 0xFF;
+    }
+};
+
 class IService;
 class IHandler
 {
@@ -240,7 +371,7 @@ public:
     virtual ~BtCtx();
 
     static BtCtx* instance();
-    virtual IServer* new_server(ISrvProc* proc, int hcidev, const char* name, int tweak_delay=0, bool advall=0, bool defaults = true)=0;
+    virtual IServer* new_server(ISrvProc* proc, int hcidev, BtConfig* config, int tweak_delay=0, bool advall=0, bool defaults = true)=0;
 };
 
 /**
@@ -297,7 +428,6 @@ public:
 private:
     IHandler* _ph;
 };
-
 
 };
 

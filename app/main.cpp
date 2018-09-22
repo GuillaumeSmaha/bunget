@@ -44,6 +44,7 @@ select Run in Terminal
 
 */
 
+#include <unistd.h>
 #include <libbunget.h>
 #include "args.h"
 #include "proc.h"
@@ -55,13 +56,16 @@ bool __alive = true;
 
 int main(int argc, char **argv)
 {
+    char hname[128] = {0};
+    gethostname(hname, sizeof(hname)-sizeof(char));
+
     args::ArgumentParser parser(LIBBUNGET_VERSION_STRING);
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
     args::ValueFlag<int> device(parser, "device", "Device", {'d', "device"}, args::Options::Required);
     args::ValueFlag<int> tweakDelay(parser, "tweak-delay", "Tweak delay", {'w', "tweak-delay"}, 0);
     args::ValueFlag<int> timeAdvetising(parser, "time-advertasing", "Time advertising", {'t', "time-advertasing"}, 512);
-    args::ValueFlag<::string> name(parser, "name", "Device name", {'n', "name"});
-    args::ValueFlag<::string> serviceName(parser, "service-name", "Service name", {'s', "service"}, "bunget");
+    args::ValueFlag<::string> deviceName(parser, "name", "Device name", {'n', "name"}, std::string(hname));
+    args::ValueFlag<::string> serviceName(parser, "service-name", "Service name", {'s', "service"}, std::string(hname));
 
     try
     {
@@ -85,11 +89,20 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    TRACE("devcname = " << args::get(deviceName));
+    BtConfig config;    
+    config._name = args::get(deviceName);
+    config._name_short = args::get(deviceName);
+    config._tx_power = 0x04;
+    config.set_apparence(APPEARANCE_GENERIC_EYE_GLASSES);
+    config.set_periphical_pref_conn(BtConfig::S_PERIPHERAL_PREF_CONN::BALANCED);
+    config.set_class_of_device(COD_SERVICE_INFORMATION, COD_MAJOR_MISCELLANEOUS, 0);
+
     BtCtx* ctx = BtCtx::instance();                // BT context
     proc   procedure;                              // this procedure
 
     try{
-        IServer* BS =  ctx->new_server(&procedure, args::get(device), args::get(name).c_str(), args::get(tweakDelay), true, true);
+        IServer* BS =  ctx->new_server(&procedure, args::get(device), &config, args::get(tweakDelay), true, true);
 // #if 0   // not tested !!!
         // BS->set_name("advname"); // this is the bt name.
         //99999999-9999-9999-9999-999999999999

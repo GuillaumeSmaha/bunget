@@ -51,7 +51,7 @@ class bu_gap
 public:
     bu_gap(bu_hci* hci);
     virtual ~bu_gap();
-    void advertise(const std::string& name, std::vector<IService*>& srvs, uint32_t pin);
+    void advertise(const BtConfig* config, std::vector<IService*>& srvs, uint32_t pin);
     void adv_beacon(const uint128_t& uuid, uint16_t minor, uint16_t major, int8_t power, uint16_t manid, const bybuff& b);
     void stop_adv();
     void restart_adv();

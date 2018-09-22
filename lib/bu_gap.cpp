@@ -46,7 +46,7 @@ int bu_gap::set_btname(const char* name)
 
 /****************************************************************************************
 */
-void bu_gap::advertise(const std::string& name,
+void bu_gap::advertise(const BtConfig* config,
                         std::vector<IService*>& srvs,
                         uint32_t pin)
 {
@@ -54,7 +54,6 @@ void bu_gap::advertise(const std::string& name,
     {
         bybuff  advData;
         bybuff  scn;
-        size_t  nservs =  _hci->srv()->nServices();
 /*
         for(const auto  &s : srvs)
         {
@@ -65,13 +64,30 @@ void bu_gap::advertise(const std::string& name,
         }
 */
 
+        // Flags
+        advData << uint8_t(0x2) << uint8_t(0x1) << uint8_t(0x6);
+        // TX Power
+        advData << uint8_t(0x2) << uint8_t(0xA) << config->_tx_power;
+        // Class of Device
+        advData << uint8_t(0x4) << uint8_t(0xD) << config->_class_of_device[0] << config->_class_of_device[1] << config->_class_of_device[2];
+        // Appareance
+        advData << uint8_t(0x3) << uint8_t(0x19) << config->_appearance[0] << config->_appearance[1];
+
+        // Complete Services UUID16
+        size_t  nservs =  _hci->srv()->nServices();
+        size_t len = 0;
+        for(const auto  &s : srvs)
+        {
+            GattSrv* ps = dynamic_cast<GattSrv*>(s);
+            if(!ps->_default)
+                len ++;
+        }
+        printf("Service len: %d\n", len);
+        // Nb services
+        advData << (uint8_t(1 + 2 * len));
+
         const uint8_t adTypeUUID16Bit = 0x3;
         const uint8_t adTypeUUID128Bit = 0x7;
-
-
-        advData << uint8_t(0x2) << uint8_t(0x1) << uint8_t(0x6);
-        advData<<(uint8_t(1 + 2 * nservs));
-
         bool is16 = true;
         if(!srvs.empty() && dynamic_cast<GattSrv*>(srvs[0])->_cuid.is_16())
         {
@@ -79,12 +95,11 @@ void bu_gap::advertise(const std::string& name,
         } else {
             advData << adTypeUUID128Bit;
             is16 = false;
-        }
+        }                                                                                                            
+
         for(const auto  &s : srvs)
         {
             GattSrv* ps = dynamic_cast<GattSrv*>(s);
-        //    if(ps->_default)
-         //       continue;
            if(ps->_default)
                continue;
             ps->debug();
@@ -99,9 +114,22 @@ void bu_gap::advertise(const std::string& name,
                 advData << uid;
             }
         }
-        scn<<uint8_t(1+name.length())<<uint8_t(0x8);
-        scn<<name;
-        _air_waveit(advData, scn);
+        // Complete name
+        scn << uint8_t(1+config->_name.length()) << uint8_t(0x9);
+        scn << config->_name;
+        // Short name
+        // scn << uint8_t(1+config->_name_short.length()) << uint8_t(0x8);
+        // scn << config->_name_short;
+        // Appareance
+        scn << uint8_t(0x3) << uint8_t(0x19) << config->_appearance;
+
+        
+        printf("Advertise !!!!\n");
+        TRACE("Advertise name = " << config->_name);
+        TRACE("Advertise name short = " << config->_name_short);
+        printf("Advertise advData len: %d\n", advData.length());
+        printf("Advertise scn len: %d\n", scn.length());
+        _air_waveit(scn, advData);
     }
 }
 
