@@ -66,13 +66,7 @@ void GattSrv::_ctor(GHandler* pci, uint8_t props, uint8_t secure, uint8_t format
     pci->_hndl   = _srv->add_gattel(pci);
     this->_lasthndl = pci->_hndl; //mcooo
     pci->_hparent = this->_hndl;
-    pci->_length = length;
-    pci->_value = new uint8_t[MAX_GATTLEN];
-    ::memset(pci->_value,0,MAX_GATTLEN);
-    if(val)
-    {
-        ::memcpy(pci->_value,val,length);
-    }
+    pci->_put_value(val,length);
 }
 
 /****************************************************************************************
@@ -84,12 +78,7 @@ GHandler*    GattSrv::_add_charct_value(uint16_t handle, uint32_t uid, uint8_t l
     pciv->_srv   =  this->_srv;
     pciv->_length=length;
     if(length){
-        pciv->_value = new uint8_t[MAX_GATTLEN];
-        ::memset(pciv->_value,0,MAX_GATTLEN);
-        if(val)
-        {
-            ::memcpy(pciv->_value,val,length);
-        }
+        pciv->_put_value(val,length);
     }
     pciv->_hndl = _srv->add_gattel(pciv);
     this->_lasthndl = pciv->_hndl; //mcooo
@@ -106,12 +95,7 @@ GHandler*    GattSrv::_add_charct_value(uint16_t handle, const bt_uuid_t& uuid, 
     pciv->_length=length;
     if(length)
     {
-        pciv->_value = new uint8_t[MAX_GATTLEN];
-        ::memset(pciv->_value,0,MAX_GATTLEN);
-        if(val)
-        {
-            ::memcpy(pciv->_value,val,length);
-        }
+        pciv->_put_value(val,length);
     }
     pciv->_hndl = _srv->add_gattel(pciv);
     this->_lasthndl = pciv->_hndl; //mcooo
@@ -217,10 +201,7 @@ IHandler* GHandler::add_descriptor(uint16_t uid, uint8_t prop, uint8_t* value, i
     GHandler* p =  new GHandler(H_DSC, _srv, this->_hndl, uid);
     if(len)
     {
-        p->_value = new uint8_t[MAX_GATTLEN];
-        ::memset(p->_value,0,MAX_GATTLEN);
-        if(value)
-            ::memcpy(p->_value,value,len);
+        p->_put_value(value,len);
     }
     p->_length = len;
     p->_props = prop;
@@ -235,10 +216,7 @@ IHandler* GHandler::add_descriptor(const bt_uuid_t& uid, uint8_t prop, uint8_t* 
     GHandler* p =  new GHandler(H_DSC, _srv, this->_hndl, uid);
     if(len)
     {
-        p->_value = new uint8_t[MAX_GATTLEN];
-        ::memset(p->_value,0,MAX_GATTLEN);
-        if(value)
-            ::memcpy(p->_value,value,len);
+        p->_put_value(value,len);
     }
     p->_length = len;
     p->_props = prop;
@@ -311,15 +289,22 @@ int GHandler::_put_value(const bybuff& buff)
 */
 int GHandler::_put_value(const uint8_t* v, size_t length)
 {
-    if(length==0)  return 0;
+    if(length==0)
+    {
+        _length = 0;
+        return 0;
+    }
     if(_value==0)
     {
         _value = new uint8_t[MAX_GATTLEN];
+        _length = 0;
         ::memset(_value,0,MAX_GATTLEN);
     }
-    _length = std::min(length, (size_t)MAX_GATTLEN);
-    ::memcpy(_value, v, _length);
-    return length;
+    if (v) {
+        _length = std::min(length, (size_t)MAX_GATTLEN);
+        ::memcpy(_value, v, _length);
+    }
+    return _length;
 }
 
 /****************************************************************************************

@@ -118,8 +118,6 @@ public:
     uint8_t get_length()const;
     const uint8_t* get_value()const;
     int put_value(const uint8_t* v, size_t len);
-
-private:
     int _put_value(const uint8_t* v, size_t len);
     int _put_value(const bybuff& buff);
 
