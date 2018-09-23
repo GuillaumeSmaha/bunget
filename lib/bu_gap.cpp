@@ -120,15 +120,7 @@ void bu_gap::advertise(const BtConfig* config,
         // Short name
         // scn << uint8_t(1+config->_name_short.length()) << uint8_t(0x8);
         // scn << config->_name_short;
-        // Appareance
-        scn << uint8_t(0x3) << uint8_t(0x19) << config->_appearance;
-
         
-        printf("Advertise !!!!\n");
-        TRACE("Advertise name = " << config->_name);
-        TRACE("Advertise name short = " << config->_name_short);
-        printf("Advertise advData len: %d\n", advData.length());
-        printf("Advertise scn len: %d\n", scn.length());
         _air_waveit(scn, advData);
     }
 }

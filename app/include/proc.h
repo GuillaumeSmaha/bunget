@@ -9,8 +9,9 @@
 
 /****************************************************************************************
 */
-#define UID_GPIO    0x3400
+#define UID_KEY    0x3400
 #define UID_TIME    0x3401
+#define UID_GPIO    0x3402
 #define UID_TEMP    0x3403
 
 /****************************************************************************************
@@ -33,20 +34,12 @@ public:
     bool onSpin(IServer* ps, uint16_t notyUuid);
 
 private:
-    void        _prepare_gpio17();
-    const char* _get_time();
-    float       _get_temp();
-    const char* _get_temp_s();
-    uint8_t     _get_gpio();
     void        _send_value(IHandler* pc);
 
 public:
     char        _some[20];
     bool        _subscribed;
-    IHandler*   LedChr;       // RW
-    IHandler*   TimeChr;      // NIR
-    IHandler*   Temp1Chr;     // NIR
-    IHandler*   EchoCht;
+    IHandler*   Key;       // RW
 private:
     cryptos     _crypt;         // MANDATORY, detached form lib, Use it on your own GNU
 };

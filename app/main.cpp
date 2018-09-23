@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     config._name = args::get(deviceName);
     config._name_short = args::get(deviceName);
     config._tx_power = 0x04;
-    config.set_apparence(APPEARANCE_GENERIC_EYE_GLASSES);
+    config.set_apparence(APPEARANCE_GENERIC_HID);
     config.set_periphical_pref_conn(BtConfig::S_PERIPHERAL_PREF_CONN::BALANCED);
     config.set_class_of_device(COD_SERVICE_INFORMATION, COD_MAJOR_MISCELLANEOUS, 0);
 
@@ -111,17 +111,21 @@ int main(int argc, char **argv)
 
         IService*   ps = BS->add_service(0x123F, args::get(serviceName).c_str());
 
-        procedure.LedChr = ps->add_charact(UID_GPIO,PROPERTY_WRITE|PROPERTY_INDICATE,
+        procedure.Key = ps->add_charact(UID_KEY,PROPERTY_WRITE|PROPERTY_INDICATE,
+                                 0,
+                                 FORMAT_RAW, 1); // 1 / 0
+
+        ps->add_charact(UID_GPIO,PROPERTY_WRITE|PROPERTY_INDICATE,
                                  0,
                                  FORMAT_RAW, 1); // 1 / 0
 
         //procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ|PROPERTY_NOTIFY,
-        procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ,
+        ps->add_charact(UID_TIME, PROPERTY_READ,
                                  0,
                                  FORMAT_RAW, 20); // we send it as string
 
         //procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_NOTIFY|PROPERTY_INDICATE,
-        procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_READ,
+        ps->add_charact(UID_TEMP, PROPERTY_READ,
                                   0,
                                   FORMAT_FLOAT, FORMAT_FLOAT_LEN); // we send it as float
 

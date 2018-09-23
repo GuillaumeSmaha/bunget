@@ -29,7 +29,7 @@
 #include "bluetooth.h"
 
 #ifdef DEBUG
-#   define TRACE(x)    std::cout << x << " \n"
+#   define TRACE(x)    std::cerr << x << " \n"
 #else
 #   define TRACE(x)
 #endif //

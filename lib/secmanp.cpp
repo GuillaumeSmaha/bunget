@@ -140,6 +140,8 @@ void secmanp::_pairing_confirm(const bybuff& data)
     bybuff  plain;
     bybuff  is_encrypted;
 
+    TRACE("pairing confirm");
+
     _pncf.reset();
     _tk.reset();
     _pcnf = data;
@@ -159,6 +161,7 @@ void secmanp::_pairing_random(const bybuff& data)
     bybuff  r(data.buffer()+1,data.length()-1);
     bybuff  is_encrypted;
     bybuff  pncf,tosend;
+    TRACE("pairing _pairing_random");
 
     _crypt->c1(_tk, r, _pres, _preq, _iat, _ia, _rat,_ra,is_encrypted);
     pncf << uint8_t(SMP_PAIRING_CONFIRM) << is_encrypted;
