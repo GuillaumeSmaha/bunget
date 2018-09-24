@@ -89,7 +89,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    TRACE("devcname = " << args::get(deviceName));
+    TRACE("devcname = '" << args::get(deviceName) << "'");
     BtConfig config;    
     config._name = args::get(deviceName);
     config._name_short = args::get(deviceName);

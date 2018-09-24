@@ -74,7 +74,6 @@ void bu_gap::advertise(const BtConfig* config,
         advData << uint8_t(0x3) << uint8_t(0x19) << config->_appearance[0] << config->_appearance[1];
 
         // Complete Services UUID16
-        size_t  nservs =  _hci->srv()->nServices();
         size_t len = 0;
         for(const auto  &s : srvs)
         {

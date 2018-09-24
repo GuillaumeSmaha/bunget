@@ -133,13 +133,12 @@ void proc::onWriteRequest(IHandler* pc)
     TRACE("Remote data:" << ret);
     if(pc->get_16uid() == UID_KEY)
     {
-        // std::cout << "ret:" << std::endl;
-        std::cout << ret_hex << std::endl;
-        std::cout << ret;
-        if(ret.back() == '\n')
-        {
+        if (pc->get_length() == 1 && value[0] == 0) {
             TRACE("stoppppppppppppppppppppppp");
             __alive = false;
+        }
+        else {
+            std::cout << ret;
         }
     }
 }
