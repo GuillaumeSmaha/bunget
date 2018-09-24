@@ -10,9 +10,6 @@
 /****************************************************************************************
 */
 #define UID_KEY    0x3400
-#define UID_TIME    0x3401
-#define UID_GPIO    0x3402
-#define UID_TEMP    0x3403
 
 /****************************************************************************************
 */
@@ -37,7 +34,6 @@ private:
     void        _send_value(IHandler* pc);
 
 public:
-    char        _some[20];
     bool        _subscribed;
     IHandler*   Key;       // RW
 private:

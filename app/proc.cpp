@@ -7,34 +7,13 @@
 #include <termios.h>
 #include "proc.h"
 
-/****************************************************************************************
- * intrerrupt the demo in a orthodox way
-*/
-int _kbhit() {
-    static const int STDIN = 0;
-    static bool initialized = false;
-
-    if (! initialized) {
-        // Use termios to turn off line buffering
-        termios term;
-        tcgetattr(STDIN, &term);
-        term.c_lflag &= ~ICANON;
-        tcsetattr(STDIN, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        initialized = true;
-    }
-
-    int bytesWaiting;
-    ioctl(STDIN, 0x541B, &bytesWaiting);
-    return bytesWaiting;
-}
-
+extern bool     __alive;
 
 /****************************************************************************************
 */
 proc::proc()
 {
-    _subscribed=false;
+    _subscribed = false;
 }
 
 /****************************************************************************************
@@ -42,19 +21,19 @@ proc::proc()
 */
 bool proc::initHciDevice(int devid, const char* devn)
 {
-    // char name[128];
-    // ::sprintf(name,"btmgmt -i %d power off", devid);
-    // system(name);
-    // ::sprintf(name,"btmgmt -i %d le on", devid);
-    // system(name);
-    // ::sprintf(name,"btmgmt -i %d connectable on", devid);
-    // system(name);
-    // ::sprintf(name,"btmgmt -i %d advertising on", devid);
-    // system(name);
-    // ::sprintf(name,"btmgmt -i %d bredr off", devid);
-    // system(name);
-    // ::sprintf(name,"btmgmt -i %d power on", devid);
-    // system(name);
+    char name[128];
+    ::sprintf(name,"btmgmt -i %d power off 1>&2", devid);
+    system(name);
+    ::sprintf(name,"btmgmt -i %d le on 1>&2", devid);
+    system(name);
+    ::sprintf(name,"btmgmt -i %d connectable on 1>&2", devid);
+    system(name);
+    ::sprintf(name,"btmgmt -i %d advertising on 1>&2", devid);
+    system(name);
+    ::sprintf(name,"btmgmt -i %d bredr off 1>&2", devid);
+    system(name);
+    ::sprintf(name,"btmgmt -i %d power on 1>&2", devid);
+    system(name);
     
     return true;
 }
@@ -63,12 +42,6 @@ bool proc::initHciDevice(int devid, const char* devn)
 */
 bool proc::onSpin(IServer* ps, uint16_t notyUuid)
 {
-    if(_kbhit()){
-        if(getchar()=='q')
-        return false;
-    }
-
-
 /**
     Control notyUuid frequency from BS->advertise(512<-this value in ms);
     where 512 is the interval in milliseconds when the
@@ -145,6 +118,7 @@ void proc::onWriteRequest(IHandler* pc)
 {
     TRACE("proc event:  onWriteRequest:" <<  std::hex<< pc->get_16uid() << std::dec);
     std::string     ret;
+    std::string     ret_hex;
     const uint8_t*  value = pc->get_value();
     char            by[4];
     int             i=0;
@@ -152,12 +126,21 @@ void proc::onWriteRequest(IHandler* pc)
     for(;i<pc->get_length();i++)
     {
         ::sprintf(by,"%02X:",value[i]);
+        ret_hex.append(by);
+        ::sprintf(by,"%c",value[i]);
         ret.append(by);
     }
     TRACE("Remote data:" << ret);
     if(pc->get_16uid() == UID_KEY)
     {
+        // std::cout << "ret:" << std::endl;
+        std::cout << ret_hex << std::endl;
         std::cout << ret;
+        if(ret.back() == '\n')
+        {
+            TRACE("stoppppppppppppppppppppppp");
+            __alive = false;
+        }
     }
 }
 

@@ -103,31 +103,12 @@ int main(int argc, char **argv)
 
     try{
         IServer* BS =  ctx->new_server(&procedure, args::get(device), &config, args::get(tweakDelay), true, true);
-// #if 0   // not tested !!!
-        // BS->set_name("advname"); // this is the bt name.
-        //99999999-9999-9999-9999-999999999999
-        // BS->adv_beacon("11111111-1111-1111-1111-111111111111", 1, 10, -10, 0x004C, (const uint8_t*)"todo", 7);
-// #endif // 0
 
         IService*   ps = BS->add_service(0x123F, args::get(serviceName).c_str());
 
         procedure.Key = ps->add_charact(UID_KEY,PROPERTY_WRITE|PROPERTY_INDICATE,
                                  0,
-                                 FORMAT_RAW, 1); // 1 / 0
-
-        ps->add_charact(UID_GPIO,PROPERTY_WRITE|PROPERTY_INDICATE,
-                                 0,
-                                 FORMAT_RAW, 1); // 1 / 0
-
-        //procedure.TimeChr = ps->add_charact(UID_TIME, PROPERTY_READ|PROPERTY_NOTIFY,
-        ps->add_charact(UID_TIME, PROPERTY_READ,
-                                 0,
-                                 FORMAT_RAW, 20); // we send it as string
-
-        //procedure.Temp1Chr = ps->add_charact(UID_TEMP, PROPERTY_NOTIFY|PROPERTY_INDICATE,
-        ps->add_charact(UID_TEMP, PROPERTY_READ,
-                                  0,
-                                  FORMAT_FLOAT, FORMAT_FLOAT_LEN); // we send it as float
+                                 FORMAT_RAW, 128);
 
         BS->advertise(args::get(timeAdvetising));
         BS->run();
