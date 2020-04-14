@@ -196,11 +196,7 @@ public:
             delete a.second;
 
     }
-<<<<<<< HEAD
-    virtual IServer* new_server(ISrvProc* proc, int hcidev, const char* name, int tweak_delay=0, bool advall=false, bool defaults = true);
-=======
-    virtual IServer* new_server(ISrvProc* proc, int hcidev, BtConfig* config, int tweak_delay=0, bool advall=false);
->>>>>>> Add btconfig
+    virtual IServer* new_server(ISrvProc* proc, int hcidev, BtConfig* config, int tweak_delay=0, bool advall=false, bool defaults = true);
  private:
     std::map<int,IServer*> _adapters;
 };
